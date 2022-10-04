@@ -18,7 +18,7 @@ public class TimeLogger {
         logger.info(prefix + " " + formatTime(normalizer.apply(time, N)));
     }
 
-    private static String formatTime(double time) {
+    public static String formatTime(double time) {
         decimalFormat.applyPattern(timePattern);
         return decimalFormat.format(time);
     }

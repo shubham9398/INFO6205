@@ -24,10 +24,64 @@ public class ThreeSumQuadratic implements ThreeSum {
     }
 
     public Triple[] getTriples() {
-        List<Triple> triples = new ArrayList<>();
-        for (int i = 0; i < length; i++) triples.addAll(getTriples(i));
-        Collections.sort(triples);
-        return triples.stream().distinct().toArray(Triple[]::new);
+        List<Triple> result = new ArrayList<>();
+        int length = a.length;
+
+        // check validation
+        if(a == null || length < 3)
+            return result.toArray(new Triple[0]);
+
+        // sort the array
+        Arrays.sort(a);
+
+        // first loop from start to end of the array
+        for(int i = 0; i < length - 2; i++)
+        {
+            // science the array is sorted, there is not a chance that sum is 0, if we loop to a number that is bigger than 0
+            if(a[i]>0)
+                break;
+
+            // skip if we meet duplicate number
+            if(i > 0 && a[i] == a[i - 1])
+                continue;
+
+            // 2 pointers that loop from start and end to the center
+            int left = i + 1;
+            int right = length - 1;
+
+            // second loop
+            while(left < right)
+            {
+                int sum = a[i] + a[left] + a[right];
+
+                // check the sum
+                if(sum == 0)
+                {
+                    // if the sum is 0, which is what we want, remember it
+                    result.add(new Triple(a[i], a[left], a[right]));
+
+                    // then move 2 pointer one step the the center
+                    left++;
+                    right--;
+
+                    // skip duplicate numbers
+                    while(left < right && a[left] == a[left - 1])
+                        left++;
+
+                    while(left < right && a[right] == a[right + 1])
+                        right--;
+                }
+                // if the sum is smaller than 0, we need to move left pointer, to make the sum bigger to approach 0
+                else if(sum < 0)
+                    left++;
+
+                    // similarly, move the right pointer to make the sum small to approach 0
+                else
+                    right--;
+            }
+        }
+
+        return result.stream().distinct().toArray(Triple[]::new);
     }
 
     /**
@@ -74,6 +128,12 @@ public class ThreeSumQuadratic implements ThreeSum {
                     }
                     left++;
                     right--;
+
+                    while(left < right && a[left] == a[left - 1])
+                        left++;
+
+                    while(left < right && a[right] == a[right + 1])
+                        right--;
                 }
                 else if (sum < 0)
                 {
