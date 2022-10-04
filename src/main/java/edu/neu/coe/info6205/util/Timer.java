@@ -45,20 +45,39 @@ public class Timer {
     }
 
     /**
-     * Pause (without counting a lap); run the given functions n times while being timed, i.e. once per "lap", and finally return the result of calling meanLapTime().
+     * Pause (without counting a lap); run the given functions n times while being timed, i.e. once per "lap",
+     * and finally return the result of calling meanLapTime().
      *
      * @param n            the number of repetitions.
      * @param supplier     a function which supplies a T value.
      * @param function     a function T=>U and which is to be timed.
-     * @param preFunction  a function which pre-processes a T value and which precedes the call of function, but which is not timed (may be null).
-     * @param postFunction a function which consumes a U and which succeeds the call of function, but which is not timed (may be null).
+     * @param preFunction  a function which pre-processes a T value and which precedes the call of function,
+     *                     but which is not timed (maybe null).
+     * @param postFunction a function which consumes a U and which succeeds the call of function,
+     *                     but which is not timed (maybe null).
      * @return the average milliseconds per repetition.
      */
     public <T, U> double repeat(int n, Supplier<T> supplier, Function<T, U> function, UnaryOperator<T> preFunction, Consumer<U> postFunction) {
         logger.trace("repeat: with " + n + " runs");
-        // FIXME: note that the timer is running when this method is called and should still be running when it returns. by replacing the following code
-         return 0;
-        // END 
+
+        T t = supplier.get();
+
+        pause();
+
+        for (int i = 0; i < n; i++) {
+
+            T preT = preFunction == null ? t : preFunction.apply(t);
+
+            resume();
+
+            U u = function.apply(preT);
+
+            pauseAndLap();
+
+            if(postFunction!=null) postFunction.accept(u);
+        }
+
+        return meanLapTime();
     }
 
     /**
@@ -176,9 +195,7 @@ public class Timer {
      * @return the number of ticks for the system clock. Currently defined as nano time.
      */
     private static long getClock() {
-        // FIXME by replacing the following code
-         return 0;
-        // END 
+         return System.nanoTime();
     }
 
     /**
@@ -189,9 +206,7 @@ public class Timer {
      * @return the corresponding number of milliseconds.
      */
     private static double toMillisecs(long ticks) {
-        // FIXME by replacing the following code
-         return 0;
-        // END 
+        return ticks / 1e6;
     }
 
     final static LazyLogger logger = new LazyLogger(Timer.class);
