@@ -1,2 +1,2 @@
 # INFO6205
-this is a fork from info 6250
+this is a fork from info 6205
