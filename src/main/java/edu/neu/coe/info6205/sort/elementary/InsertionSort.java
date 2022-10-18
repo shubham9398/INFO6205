@@ -56,10 +56,19 @@ public class InsertionSort<X extends Comparable<X>> extends SortWithHelper<X> {
      * @param to   the index of the first element not to sort
      */
     public void sort(X[] xs, int from, int to) {
-        final Helper<X> helper = getHelper();
+        Helper<X> helper = getHelper();
+        for(int i = from + 1; i < to; i++) {
+            int j = i;
+            while(j > from && helper.swapStableConditional(xs, j)) {
+                j--;
+            }
+        }
+    }
 
-        // FIXME
-        // END 
+    private void swap(X[] xs, int i, int j) {
+        X temp = xs[i];
+        xs[i] = xs[j];
+        xs[j] = temp;
     }
 
     public static final String DESCRIPTION = "Insertion sort";
@@ -68,3 +77,4 @@ public class InsertionSort<X extends Comparable<X>> extends SortWithHelper<X> {
         new InsertionSort<T>().mutatingSort(ts);
     }
 }
+

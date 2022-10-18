@@ -65,15 +65,10 @@ public class Timer {
         pause();
 
         for (int i = 0; i < n; i++) {
-
             T preT = preFunction == null ? t : preFunction.apply(t);
-
             resume();
-
             U u = function.apply(preT);
-
             pauseAndLap();
-
             if(postFunction!=null) postFunction.accept(u);
         }
 
