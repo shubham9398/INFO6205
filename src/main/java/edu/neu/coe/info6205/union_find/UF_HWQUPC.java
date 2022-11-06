@@ -7,7 +7,11 @@
  */
 package edu.neu.coe.info6205.union_find;
 
+import edu.neu.coe.info6205.graphs.BFS_and_prims.StdRandom;
+
 import java.util.Arrays;
+import java.util.Random;
+import java.util.Scanner;
 
 /**
  * Height-weighted Quick Union with Path Compression
@@ -81,8 +85,12 @@ public class UF_HWQUPC implements UF {
     public int find(int p) {
         validate(p);
         int root = p;
-        // FIXME
-        // END 
+        while (root != parent[root]) {
+            if (pathCompression) {
+                doPathCompression(root);
+            }
+            root = parent[root];
+        }
         return root;
     }
 
@@ -101,7 +109,7 @@ public class UF_HWQUPC implements UF {
     }
 
     /**
-     * Merges the component containing site {@code p} with the
+     * Merges the component containing site {@code p} with
      * the component containing site {@code q}.
      *
      * @param p the integer representing one site
@@ -169,15 +177,62 @@ public class UF_HWQUPC implements UF {
     private boolean pathCompression;
 
     private void mergeComponents(int i, int j) {
-        // FIXME make shorter root point to taller one
-        // END 
+        if(height[i] < height[j])
+        {
+            updateParent(i,j);
+        }
+        else
+        {
+            updateParent(j,i);
+            if(height[i]==height[j])
+            {
+                height[i]++;
+            }
+        }
     }
 
     /**
      * This implements the single-pass path-halving mechanism of path compression
      */
     private void doPathCompression(int i) {
-        // FIXME update parent to value of grandparent
-        // END 
+        parent[i] = parent[parent[i]];
+    }
+
+    public static void main(String[] args){
+        int numberOfN = 10;
+        int n = 1;
+
+        System.out.println("n\tm");
+        for(int i = 1; i <= numberOfN; i++){
+            n *= 2; // double the number of N each time
+            int m = count(n);
+            System.out.println(n+"\t"+m);
+        }
+    }
+
+    /**
+     * This method counts the number of times union is called
+     * @param n the number of sites
+     * @return the number of times union is called
+     */
+    public static int count(int n)
+    {
+        int trys = 100;
+        int m = 0;
+        for(int i = 0; i < trys; i++)
+        {
+            int _m = 0;
+            UF_HWQUPC uf = new UF_HWQUPC(n);
+            Random rand = new Random();
+            while(uf.components() > 1){
+                int p = rand.nextInt(n);
+                int q = rand.nextInt(n);
+                uf.connect(p,q);
+                _m++;
+            }
+            m += _m;
+        }
+
+        return m / trys;
     }
 }
