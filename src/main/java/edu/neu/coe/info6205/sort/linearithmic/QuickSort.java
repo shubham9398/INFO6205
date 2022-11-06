@@ -40,7 +40,7 @@ public abstract class QuickSort<X extends Comparable<X>> extends SortWithHelper<
     }
 
     /**
-     * Method to sort.
+     * Method to sort.t
      *
      * @param xs       sort the array xs, returning the sorted result, leaving xs unchanged.
      * @param makeCopy if set to true, we make a copy first and sort that.

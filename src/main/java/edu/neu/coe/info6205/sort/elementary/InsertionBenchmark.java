@@ -70,10 +70,6 @@ public class InsertionBenchmark{
         arrayMap.put("reversed", this::createReverseOrderedArray);
         arrayMap.put("partiallyOrdered", this::createPartiallyOrderedArray);
         timeMap = new HashMap<>();
-        timeMap.put("random", 0.0);
-        timeMap.put("ordered", 0.0);
-        timeMap.put("reversed", 0.0);
-        timeMap.put("partiallyOrdered", 0.0);
     }
 
     // region  methods
@@ -112,7 +108,7 @@ public class InsertionBenchmark{
             if (i < n / 2) {
                 partiallyOrderedArray[i] = i * 10;
             } else {
-                partiallyOrderedArray[i] = (n - i) * 10;
+                partiallyOrderedArray[i] = (int) (Math.random() * n * 10);
             }
         }
 
@@ -164,7 +160,8 @@ public class InsertionBenchmark{
             benchmarks[i - 1] = insertionBenchmark;
         }
 
-        System.out.println("n \trandom \tordered \treversed \tpartiallyOrdered");
+        System.out.println("n \trandom \tordered \tpartiallyOrdered \treversed");
+
         for (InsertionBenchmark benchmark : benchmarks) {
             System.out.println(benchmark);
         }
