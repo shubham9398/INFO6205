@@ -7,11 +7,8 @@
  */
 package edu.neu.coe.info6205.union_find;
 
-import edu.neu.coe.info6205.graphs.BFS_and_prims.StdRandom;
-
 import java.util.Arrays;
 import java.util.Random;
-import java.util.Scanner;
 
 /**
  * Height-weighted Quick Union with Path Compression
@@ -199,19 +196,24 @@ public class UF_HWQUPC implements UF {
     }
 
     public static void main(String[] args){
-        int numberOfN = 10;
-        int n = 1;
+        int numberOfDifferentN = 10;
+        int n = 100000;
 
-        System.out.println("n\tm");
-        for(int i = 1; i <= numberOfN; i++){
-            n *= 2; // double the number of N each time
+        System.out.println("n\tm\tn*log2(n)\tm/(n*log2(n))");
+        for(int i = 0; i < numberOfDifferentN; i++){
+            n += 100000; // double the number of N each time
             int m = count(n);
-            System.out.println(n+"\t"+m);
+            System.out.println(n + "\t" + m + "\t" + String.format("%.4f", n* lg(n))+
+                    "\t" +String.format("%.4f",  m/(n*Math.log(n)/Math.log(2))));
         }
     }
 
+    public static double lg(int n){
+        return Math.log(n)/Math.log(2);
+    }
+
     /**
-     * This method counts the number of times union is called
+     * This method counts the number of connections needed to connect all the nodes
      * @param n the number of sites
      * @return the number of times union is called
      */
@@ -219,20 +221,20 @@ public class UF_HWQUPC implements UF {
     {
         int trys = 100;
         int m = 0;
-        for(int i = 0; i < trys; i++)
-        {
+
+        for(int i = 0; i < trys; i++) {
             int _m = 0;
             UF_HWQUPC uf = new UF_HWQUPC(n);
             Random rand = new Random();
-            while(uf.components() > 1){
+            while (uf.components() > 1) {
                 int p = rand.nextInt(n);
                 int q = rand.nextInt(n);
-                uf.connect(p,q);
+                uf.connect(p, q);
                 _m++;
             }
+
             m += _m;
         }
-
         return m / trys;
     }
 }
