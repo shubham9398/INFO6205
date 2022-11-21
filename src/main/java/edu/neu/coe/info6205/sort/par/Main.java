@@ -1,14 +1,14 @@
 package edu.neu.coe.info6205.sort.par;
 
-import java.io.BufferedWriter;
-import java.io.FileOutputStream;
-import java.io.IOException;
-import java.io.OutputStreamWriter;
+import java.io.*;
+import java.time.LocalDateTime;
+import java.time.format.DateTimeFormatter;
 import java.util.ArrayList;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.Random;
 import java.util.concurrent.ForkJoinPool;
+import java.util.stream.Collectors;
 
 /**
  * This code has been fleshed out by Ziyao Qiao. Thanks very much.
@@ -16,45 +16,202 @@ import java.util.concurrent.ForkJoinPool;
  */
 public class Main {
 
+
+    public static class TimeRecord
+    {
+        public int CutOff;
+
+        public int ThreadNum;
+
+        public int arraySize;
+
+        public long Time;
+
+        @Override
+        public String toString() {
+            return ThreadNum + "\t" + CutOff + "\t" + Time;
+        }
+    }
+
+
+    static Random random = new Random();
+    static int[] arraySize = {10000000};
+    static int[] threadCounts = {1,2,4,8,16,32,};
+    static int cutOffStartPercentage = 1;
+    static int cutOfEndPercentage = 90;
+    static double cutOfStepPercentage = 0.5;
+    static int repeat = 20;
+
+    static String filePrefix = "./src/ParSortResult";
+    static String fileExtension = ".csv";
+
+    static DateTimeFormatter dtf = DateTimeFormatter.ofPattern("_yyyy_MM_dd_HH_mm_ss");
+
+    static ArrayList<TimeRecord> timeRecords = new ArrayList<TimeRecord>();
+
+//    static HashMap<Integer, TimeRecordArray> timeRecordArrayMap = new HashMap<Integer, TimeRecordArray>();
+
     public static void main(String[] args) {
         processArgs(args);
-        System.out.println("Degree of parallelism: " + ForkJoinPool.getCommonPoolParallelism());
-        Random random = new Random();
-        int[] array = new int[2000000];
-        ArrayList<Long> timeList = new ArrayList<>();
-        for (int j = 50; j < 100; j++) {
-            ParSort.cutoff = 10000 * (j + 1);
-            // for (int i = 0; i < array.length; i++) array[i] = random.nextInt(10000000);
-            long time;
-            long startTime = System.currentTimeMillis();
-            for (int t = 0; t < 10; t++) {
-                for (int i = 0; i < array.length; i++) array[i] = random.nextInt(10000000);
-                ParSort.sort(array, 0, array.length);
-            }
-            long endTime = System.currentTimeMillis();
-            time = (endTime - startTime);
-            timeList.add(time);
 
+        LoopArraySize();
 
-            System.out.println("cutoff：" + (ParSort.cutoff) + "\t\t10times Time:" + time + "ms");
+        System.out.println("Export to csv");
+        WriteToCsv();
+        System.out.println("Export "+timeRecords.size()+" records to csv done");
+    }
 
+    public static void WriteToCsv()
+    {
+        if(timeRecords.size() == 0)
+        {
+            return;
         }
-        try {
-            FileOutputStream fis = new FileOutputStream("./src/result.csv");
+
+        try
+        {
+
+            LocalDateTime now = LocalDateTime.now();
+            String currentDateTime = dtf.format(now);
+            FileOutputStream fis = new FileOutputStream(filePrefix + currentDateTime + fileExtension);
             OutputStreamWriter isr = new OutputStreamWriter(fis);
             BufferedWriter bw = new BufferedWriter(isr);
-            int j = 0;
-            for (long i : timeList) {
-                String content = (double) 10000 * (j + 1) / 2000000 + "," + (double) i / 10 + "\n";
-                j++;
-                bw.write(content);
-                bw.flush();
+
+            for(int size : arraySize)
+            {
+                // headers
+                bw.write("Array Size: " + size + ",\n");
+
+                ArrayList<TimeRecord> filtered = timeRecords
+                        .stream()
+                        .filter(x -> x.arraySize == size)
+                        .collect(Collectors.toCollection(ArrayList::new));
+
+                bw.write("Cutoff,Cutoff/arraySize,");
+
+                for(int threadCount : threadCounts)
+                {
+                    bw.write(threadCount + " Thread(s),");
+                }
+
+                bw.write("\n");
+
+                // content
+                for(double i = cutOffStartPercentage; i < cutOfEndPercentage; i += cutOfStepPercentage)
+                {
+                    int cutoff = (int)(size * i / 100);
+                    bw.write(cutoff + ","  + cutoff * 1.0 / size + ",");
+
+                    ArrayList<TimeRecord> filtered2 = filtered
+                            .stream()
+                            .filter(x -> x.CutOff == cutoff)
+                            .collect(Collectors.toCollection(ArrayList::new));
+
+                    for (int threadCount : threadCounts)
+                    {
+                        ArrayList<TimeRecord> filtered3 = filtered2
+                                .stream()
+                                .filter(x -> x.ThreadNum == threadCount)
+                                .collect(Collectors.toCollection(ArrayList::new));
+
+                        if(filtered3.size() == 0)
+                        {
+                            bw.write("0,");
+                        }
+                        else
+                        {
+                            long time = filtered3.get(0).Time;
+                            bw.write(time + ",");
+                        }
+                    }
+
+                    bw.write("\n");
+                }
+                bw.write("\n");
             }
             bw.close();
 
-        } catch (IOException e) {
+        }
+        catch (IOException e)
+        {
             e.printStackTrace();
         }
+
+    }
+
+    private static void LoopArraySize()
+    {
+        for(int i = 0; i<arraySize.length; i++)
+        {
+            int size = arraySize[i];
+            System.out.println("Array Size: " + size);
+
+            LoopThreadNum(size);
+        }
+    }
+
+    private static void LoopThreadNum(int arraySize) {
+        for (int i = 0; i < threadCounts.length; i++) {
+            int threadCount = threadCounts[i];
+            ParSort.pool = new ForkJoinPool(threadCount);
+
+            System.out.println("\tThread Count: " + threadCount);
+
+            LoopCutOffs(arraySize, threadCount);
+        }
+    }
+    private static void LoopCutOffs(int arraySize, int threadNum)
+    {
+        // content
+        for(double i = cutOffStartPercentage; i < cutOfEndPercentage; i += cutOfStepPercentage)
+        {
+            int cutOff = (int)(arraySize * i / 100);
+            ParSort.cutoff = cutOff;
+
+            timeRecords.add(GetParSortRecord(arraySize, threadNum, cutOff));
+        }
+    }
+
+    private static TimeRecord GetParSortRecord(int arraySize, int threadNum, int cutoff)
+    {
+        TimeRecord record = new TimeRecord();
+        record.arraySize = arraySize;
+        record.ThreadNum = threadNum;
+        record.CutOff = cutoff;
+
+        ParSort.pool = new ForkJoinPool(threadNum);
+        ParSort.cutoff = cutoff;
+        int[] array = new int[arraySize];
+
+        for (int i = 0; i < array.length; i++) array[i] = random.nextInt();
+
+        long time = GetParSortTime(array);
+        record.Time = time;
+
+        System.out.println("\t\tcutoff: " + cutoff + "\t" + repeat + " times, time usage: " + time);
+
+        return record;
+    }
+
+    private static long GetParSortTime(int[] array)
+    {
+        long time = 0;
+
+        if(repeat < 1)
+        {
+            return time;
+        }
+
+        long start = System.currentTimeMillis();
+
+        for (int k = 0; k < repeat; k++)
+        {
+            ParSort.sort(array, 0, array.length);
+        }
+
+        long end = System.currentTimeMillis();
+
+        return end - start;
     }
 
     private static void processArgs(String[] args) {
